@@ -1,0 +1,5 @@
+# Replace with your own domain and ensure DNS points to this server.
+sms.example.com {
+    reverse_proxy 127.0.0.1:8765
+    header Strict-Transport-Security "max-age=31536000"
+}

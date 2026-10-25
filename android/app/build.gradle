@@ -1,0 +1,32 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'org.smsbridge.app'
+    compileSdk 35
+    defaultConfig {
+        applicationId providers.gradleProperty('bridgeApplicationId').getOrElse('org.smsbridge.app')
+        minSdk 26
+        targetSdk 35
+        versionCode 1
+        versionName '1.0.0'
+        resValue 'string', 'app_name', providers.gradleProperty('bridgeAppName').getOrElse('SMS Bridge')
+    }
+    buildFeatures { buildConfig true }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    if (System.getenv('APK_KEYSTORE_PASSWORD')) {
+        signingConfigs {
+            bridge {
+                storeFile rootProject.file('.signing/release.p12')
+                storePassword System.getenv('APK_KEYSTORE_PASSWORD')
+                keyAlias 'sms-bridge'
+                keyPassword System.getenv('APK_KEYSTORE_PASSWORD')
+            }
+        }
+        buildTypes { release { signingConfig signingConfigs.bridge } }
+    }
+}
+
+dependencies { testImplementation 'junit:junit:4.13.2' }

@@ -1,0 +1,17 @@
+.git
+.env
+.env.*
+**/.signing
+**/*.p12
+**/*.jks
+**/*.keystore
+**/build
+**/.gradle
+**/local.properties
+**/__pycache__
+data
+dist
+output
+android
+.venv
+node_modules

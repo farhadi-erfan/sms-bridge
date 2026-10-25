@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light dark"><title>SMS Bridge</title>
+  <link rel="stylesheet" href="/dashboard/style.css"><script src="/dashboard/app.js" defer></script>
+</head>
+<body>
+  <header><a class="brand" href="/dashboard/"><span class="mark" aria-hidden="true">↗</span><span data-brand>SMS Bridge</span></a><span class="badge">Your private inbox</span></header>
+  <main>
+    <section id="login-view" class="login">
+      <p class="eyebrow">A direct connection</p><h1>Your phone.<br>Your messages.</h1>
+      <p class="intro">A quiet place for your incoming texts, on a server you control.</p>
+      <form id="login-form" class="card"><h2>Welcome back</h2>
+        <label for="email">Email</label><input id="email" type="email" autocomplete="username" required>
+        <label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required>
+        <button type="submit">Open inbox <span aria-hidden="true">→</span></button>
+        <p class="hint">Use the credentials you chose when setting up your server.</p>
+      </form>
+    </section>
+    <section id="inbox-view" hidden>
+      <div class="heading"><div><p class="eyebrow">SMS Bridge / Inbox</p><h1>Messages</h1></div><button id="logout" class="secondary">Sign out</button></div>
+      <div class="summary"><p id="counts">Loading your inbox…</p><button id="refresh" class="secondary">Refresh</button></div>
+      <details class="card devices"><summary>Phone connection &amp; diagnostics</summary><div id="devices"></div></details>
+      <form id="search-form" class="toolbar"><label class="sr-only" for="search">Search messages</label><input id="search" type="search" placeholder="Search sender, contact or message…" maxlength="200"><button class="secondary">Search</button><label class="toggle"><input id="unread" type="checkbox"> Unread only</label></form>
+      <div class="actions"><label><input id="select-all" type="checkbox"> Select this page</label><button id="mark-read" class="secondary" disabled>Mark read</button><button id="delete" class="danger" disabled>Delete selected</button><span id="selected-count"></span></div>
+      <div id="messages" aria-label="Messages"></div>
+      <button id="more" class="secondary" hidden>Load more</button>
+      <p class="hint">Messages are stored on this server. Deleting here leaves the original text on your phone.</p>
+    </section>
+    <p id="notice" role="status" aria-live="polite"></p>
+  </main>
+  <footer>Built for a little more independence. No trackers. No third-party scripts.</footer>
+</body></html>

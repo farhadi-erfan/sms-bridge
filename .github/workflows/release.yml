@@ -1,0 +1,81 @@
+name: Public release
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: public-release
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s web/tests -v
+      - run: python tools/audit.py
+      - run: node --check web/static/app.js
+      - run: docker build -t sms-bridge:release .
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
+          log-accepted-android-sdk-licenses: false
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Restore dedicated release signing key
+        env:
+          KEY_DATA: ${{ secrets.APK_KEYSTORE_BASE64 }}
+          KEY_PASSWORD: ${{ secrets.APK_KEYSTORE_PASSWORD }}
+        run: |
+          test -n "$KEY_DATA" && test -n "$KEY_PASSWORD" || { echo 'Configure the dedicated APK signing secrets first.'; exit 1; }
+          mkdir -p android/.signing
+          printf '%s' "$KEY_DATA" | base64 --decode > android/.signing/release.p12
+          chmod 600 android/.signing/release.p12
+      - name: Build generic signed APK
+        env:
+          APK_KEYSTORE_PASSWORD: ${{ secrets.APK_KEYSTORE_PASSWORD }}
+        run: gradle --no-daemon -p android testReleaseUnitTest assembleRelease lintRelease
+      - name: Verify signature, package release and audit
+        run: |
+          mkdir -p dist
+          cp android/app/build/outputs/apk/release/app-release.apk dist/SMS-Bridge.apk
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs dist/SMS-Bridge.apk > dist/APK-SIGNATURE.txt
+          git archive --format=zip --prefix=sms-bridge/ HEAD > dist/sms-bridge-source.zip
+          python tools/audit.py dist/SMS-Bridge.apk dist/sms-bridge-source.zip
+          cd dist
+          sha256sum SMS-Bridge.apk sms-bridge-source.zip APK-SIGNATURE.txt > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: public-release
+          path: dist/
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: release-android-reports
+          path: android/app/build/reports/
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: public-release
+          path: dist/
+      - name: Publish verified public assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: gh release create "$RELEASE_TAG" dist/* --verify-tag --title "SMS Bridge $RELEASE_TAG" --notes-file docs/RELEASE.md
